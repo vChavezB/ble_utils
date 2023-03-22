@@ -1,0 +1,328 @@
+# Copyright 2023, Victor Chavez
+# SPDX-License-Identifier: Apache-2.0
+
+stages:
+  - compile
+  - quality
+  - style
+  - usage
+  - static_analysis
+  - pages
+
+variables:
+    SRC_DIR: src
+    NORDIC_CONNECT_SDK_VERSION: v2.3.0
+    ZEPHYR_TOOLCHAIN_VERSION: 0.14.1
+    ZEPHYR_BOARD: nrf52dk_nrf52832
+    # Paths defined in docker image nordicplayground/nrfconnect-sdk:main 
+    PROJ_PATH: /workdir/project
+    SDK_PATH: /workdir/zephyr-sdk
+    COMPILATION_FILE: $PROJ_PATH/build/compile_commands.json
+
+Usage Analysis:
+    image: registry.git.fh-aachen.de/embeddedtools/static-analysis/embedded-sa-docker:nrf-connect
+    tags: 
+    - shared
+    stage: usage
+    needs:
+      ["Compile"]
+    before_script:
+    - tar -xf zephyr_build.tar.xz -C $PROJ_PATH
+    - cd $PROJ_PATH
+    - export ZEPHYR_ELF=$(find -type f -name 'zephyr.elf')
+    - mv $ZEPHYR_ELF ${CI_PROJECT_DIR}/zephyr.elf
+    - pip3 install requests
+    - pip3 install -Iv puncover==0.2.2
+    - cd ${CI_PROJECT_DIR}
+    - git clone https://github.com/vChavezB/puncover_html
+    - git clone https://git.fh-aachen.de/embedded-guidelines/utils/puncover-toolchain-find
+    - export GCC_BASE=$(python3 puncover-toolchain-find/puncover-toolchain-find.py "${COMPILATION_FILE}")
+    script:
+    - echo $GCC_BASE
+    - puncover --elf_file ${CI_PROJECT_DIR}/zephyr.elf --gcc_tools_base $GCC_BASE --build_dir $PROJ_PATH/build > /dev/null &
+    - sleep 5
+    - python3 puncover_html/puncover_html.py usage_analysis
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - usage_analysis
+
+Halstead Metrics:
+    image: registry.git.fh-aachen.de/embeddedtools/ccccc-docker:latest
+    tags: 
+    - shared
+    needs:
+      ["Compile"]
+    variables:
+      OUT_DIR: ${CI_PROJECT_DIR}/html_out
+    stage: quality
+    before_script:
+    - export SRC_FILES=$(find ${SRC_DIR} -name '*.c' -o -name '*.cpp' -type f | paste -sd " ")
+    - mkdir -p $PROJ_PATH
+    - tar -xf zephyr_build.tar.xz -C $PROJ_PATH
+    script:
+    - mv $COMPILATION_FILE compile_commands.json
+    - mkdir ${OUT_DIR}
+    - ccccc ${SRC_FILES} -t $HTML_STATIC/template/html/template.tpl > ${OUT_DIR}/index.html
+    - cp -a $HTML_STATIC/* ${OUT_DIR}
+    - cd ${OUT_DIR}
+    - rm -rf 3rd/doctest
+    - sed -i 's!file:////usr/bin/ccccc/!!g' index.html  
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - $OUT_DIR
+
+Style:
+    image: registry.git.fh-aachen.de/embeddedtools/embedded-quality-docker:latest
+    tags: 
+    - shared
+    stage: style
+    before_script:
+    - wget -nv https://git.fh-aachen.de/embedded-guidelines/cfg/kwstyle_config/-/raw/main/kwstyle_embedded_guidelines.xml
+    - wget -nv https://git.fh-aachen.de/embedded-guidelines/cfg/vera-fh-profile/-/raw/main/FH.tcl
+    - mv FH.tcl /usr/lib/vera++/profiles/FH.tcl
+    script:
+    # Creat input file with all c/c++ sources
+    - find ${SRC_DIR} -type f -regex '.*\.\(ino\|c\|cpp\|hpp\|h\)'  > input_files.txt 
+    - KWStyle -D input_files.txt -xml kwstyle_embedded_guidelines.xml -html kwsytle_html
+    - vera++ -p FH.tcl -i input_files.txt -o vera.log -P max-line-length=125 -e
+    artifacts:
+        when: on_failure
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - vera.log
+        - kwsytle_html
+
+
+Security:
+    image: registry.git.fh-aachen.de/embeddedtools/embedded-quality-docker:latest
+    tags: 
+    - shared
+    stage: quality
+    script:
+    - flawfinder ${SRC_DIR}/ > flaws.out
+    - cat flaws.out
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - flaws.out
+
+Complexity:
+    image: registry.git.fh-aachen.de/embeddedtools/embedded-quality-docker:latest
+    tags: 
+    - shared
+    stage: quality
+    script:
+        - lizard ${SRC_DIR} -l cpp -o complexity.html
+        - cppclean ${SRC_DIR} > cppclean.txt || true
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - complexity.html
+        - cppclean.txt
+
+Duplicates:
+    image: registry.git.fh-aachen.de/embeddedtools/embedded-quality-docker:latest
+    tags: 
+    - shared
+    stage: quality
+    variables:
+      MIN_DUP_TOKEN: 50 #minimum tokens to detect as duplicates for cpd
+    script:
+    #Change name of sketch so it can be detected by tools
+    - $PMD_RUN cpd --minimum-tokens $MIN_DUP_TOKEN --files $SRC_DIR --language cpp --fail-on-violation false --format xml > cpd.xml
+    - xsltproc $PMD_PATH/cpdhtml.xslt cpd.xml > cpd_duplicates.html
+    #Lizard
+    - lizard -l cpp -Eduplicate ${SRC_DIR} > lizard_duplicates.txt || true
+    #Remove the complexity report and just get the duplicate info
+    - sed -i '1,/^Duplicates$/d' lizard_duplicates.txt
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - cpd_duplicates.html
+        - lizard_duplicates.txt
+
+Metrics:
+    image: registry.git.fh-aachen.de/embeddedtools/embedded-quality-docker:latest
+    tags: 
+    - shared
+    stage: quality
+    variables:
+      #More info about the metrics here https://metrixplusplus.github.io/metrixplusplus/docs/01-u-overview
+      METRIC_ARGS: --std.code.filelines.total --std.code.lines.preprocessor --std.code.lines.comments --std.code.complexity.maxindent --std.code.todo.strings --std.code.lines.code --std.code.complexity.cyclomatic --std.code.maintindex.simple
+    before_script:
+        - apk add --no-cache git
+    script:
+        - cd /tmp/
+        - git clone $CI_REPOSITORY_URL main_branch
+        - cd main_branch
+        #If on the main branch,checkout one commit before
+        - |- 
+            if [[ $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH  ]]; then
+              git checkout ${CI_COMMIT_SHA}^
+            fi    
+        - metrix++ collect ${METRIC_ARGS} -- ${SRC_DIR}
+        - cd $CI_PROJECT_DIR/
+        - metrix++ collect ${METRIC_ARGS} -- ${SRC_DIR}
+        - metrix++ view --db-file=metrixpp.db --db-file-prev=/tmp/main_branch/metrixpp.db > metrics.txt
+        - cat metrics.txt
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - metrics.txt
+
+Compile:
+    image: registry.git.fh-aachen.de/embeddedtools/nrf-docker:$NORDIC_CONNECT_SDK_VERSION
+    tags: 
+    - shared
+    stage: compile
+    script:
+    - cd $PROJ_PATH
+    - west build $CI_PROJECT_DIR/samples/uptime --board $ZEPHYR_BOARD
+    #- sed -i 's!--param=min-pagesize=0 !!g' $COMPILATION_FILE 
+    # Build files required for static analysis
+    - tar -cJf $CI_PROJECT_DIR/zephyr_build.tar.xz build
+    artifacts:
+      name: "${CI_PROJECT_NAME}-${CI_JOB_STAGE}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+      expire_in: 10 mins 
+      paths:
+      - zephyr_build.tar.xz
+
+Cppcheck:
+    needs:
+    - job: Compile
+    image: registry.git.fh-aachen.de/embeddedtools/static-analysis/cppcheck-docker:latest
+    tags: 
+    - shared
+    stage: static_analysis
+    variables:
+      REPORT_DIR: cppcheck_report
+    script:
+        #Analyze src dir and generate xml output
+        - wget -nv https://git.fh-aachen.de/embedded-guidelines/cfg/cppcheck-cfg/-/raw/main/cppcheck_suppresion.txt
+        - export CPPCHECK_ARGS="--suppressions-list=cppcheck_suppresion.txt --force --enable=all --inline-suppr"
+        - cppcheck ${CPPCHECK_ARGS} --xml --xml-version=2 ${SRC_DIR} 2>cpp_check_report.xml
+        #convert xml output to html
+        - cppcheck-htmlreport --source-dir=. --title=$project_name --file=cpp_check_report.xml --report-dir=$REPORT_DIR
+        #After checking errors, make the ci/cd fail if cppcheck found errors
+        - cppcheck ${CPPCHECK_ARGS} --error-exitcode=1 ${SRC_DIR}
+    artifacts:
+        when: on_failure
+        name: "${CI_PROJECT_NAME}-${CI_JOB_STAGE}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - $REPORT_DIR
+
+PVS Studio:
+    image: registry.git.fh-aachen.de/embeddedtools/static-analysis/embedded-sa-docker:nrf-connect
+    needs:
+    - job: Compile
+    tags: 
+    - shared
+    stage: static_analysis
+    variables:
+      REPORT_DIR: PVS_report
+      ZEPHYR_SYSLIB: /usr/lib/gcc/arm-zephyr-eabi
+    before_script: 
+      #Add PVS Studio comments for free analysis, refer to:
+      #https://pvs-studio.com/en/docs/warnings/v009/
+      - git clone https://git.fh-aachen.de/embeddedutils/pvs-free #utility to add pvs free comments
+      - tar -xf zephyr_build.tar.xz -C $PROJ_PATH
+    script:
+        # Add comments to use academic license
+        - python3 pvs-free/pvs-free.py . --add 
+        # PVS studio cant detect zephyr arm compiler, replace with vanilla arm-none-eabi
+        #- sed -i 's/arm-zephyr-eabi-gcc/arm-none-eabi-gcc/g' $COMPILATION_FILE 
+        #- sed -i 's/arm-zephyr-eabi-g++/arm-none-eabi-g++/g' $COMPILATION_FILE 
+        #- sed -i 's!workdir/zephyr-sdk/arm-zephyr-eabi/bin!usr/bin!g' $COMPILATION_FILE
+        - pvs-studio-analyzer analyze -f $COMPILATION_FILE -o project.log -e \*$PROJ_PATH/\*
+        - plog-converter -t fullhtml project.log -o $REPORT_DIR
+        - |- 
+          if ! grep -q Congratulations "$REPORT_DIR/index.html"; then
+            >&2 echo "PVS Studio found issues!"
+            exit 1
+          fi
+    artifacts:
+        when: on_failure
+        name: "${CI_PROJECT_NAME}-${CI_JOB_STAGE}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - $REPORT_DIR
+
+CodeChecker:
+    image: registry.git.fh-aachen.de/embeddedtools/static-analysis/embedded-sa-docker:nrf-connect
+    needs:
+    - job: Compile
+    tags: 
+    - shared
+    stage: static_analysis
+    variables:
+      CODECHECKER_ANALYZER_OUT: /tmp
+      REPORT_DIR:  codechecker_report
+    before_script: 
+      - wget -nv https://git.fh-aachen.de/embedded-guidelines/cfg/codechecker-cfg/-/raw/main/FH-Codechecker.json
+      - mkdir $REPORT_DIR
+      # Build files required for static analysis
+      - tar -xf zephyr_build.tar.xz -C $PROJ_PATH
+    script:
+        #Activating python env for codechecker
+        - source $CODECHECKER_ACTIVATE
+        #Env Variable that tells codechecker to analyze compiler calls for arm toolchain
+        - export CC_LOGGER_GCC_LIKE="arm-zephyr-eabi-gcc:arm-zephyr-eabi-g++"
+        #Create Skip file for analyzing project, only src of the project
+        # more information about the skip file format:
+        # https://codechecker.readthedocs.io/en/latest/analyzer/user_guide/#skip
+        #- echo -e "+*/$SRC_DIR\n" >> skip.file #only analyze the source files
+        - echo -e "-$PROJ_PATH*\n" >> skip.file
+        - echo -e "-$SDK_PATH*" >> skip.file
+        - echo -e "-D__WCHAR_MIN__=0 -m32 -I/workdir/zephyr-sdk/arm-zephyr-eabi/lib/gcc/arm-zephyr-eabi/10.3.0/include/" >> sa_flags.txt
+        - echo -e "-extra-arg-before='-m32' -extra-arg-before='-I/workdir/zephyr-sdk/arm-zephyr-eabi/lib/gcc/arm-zephyr-eabi/10.3.0/include/'" >> tidy_flags.txt
+        #Analyze the files
+        - CodeChecker analyze $COMPILATION_FILE --tidyargs tidy_flags.txt --saargs sa_flags.txt --ctu -i skip.file --enable extreme --output $CODECHECKER_ANALYZER_OUT --config FH-Codechecker.json > /dev/null
+        #Parse the analysis as html
+        - CodeChecker parse --export html --output ${REPORT_DIR} $CODECHECKER_ANALYZER_OUT --verbose debug
+    artifacts:
+        when: on_failure
+        name: "${CI_PROJECT_NAME}-${CI_JOB_STAGE}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - $REPORT_DIR
+
+pages:
+    variables:
+      # allows retrieving commits far away from last tag for proj number in doxygen
+      GIT_DEPTH: "50"
+    image: registry.git.fh-aachen.de/embeddedtools/docs:latest
+    tags: 
+    - shared
+    stage: pages
+    script:
+    - mkdir public
+    - GIT_VERSION=$(git describe --long --always --tags) 
+    - git clone https://git.fh-aachen.de/embedded-guidelines/cfg/doxygen_cfg.git --recurse-submodules --branch v1.2.0
+    - cd doxygen_cfg
+    #change name for project in doxyfile
+    - sed -i "s!ProjectName!$CI_PROJECT_NAME!g" Doxyfile.in
+    #Replace input files in template
+    - sed -i "s!README_FILE!${CI_PROJECT_DIR}/README.md!g" Doxyfile.in
+    - sed -i "s!PROJ_NUM!${GIT_VERSION}!g" Doxyfile.in
+    - sed -i "s!INPUT_FILES!${CI_PROJECT_DIR}/${SRC_DIR}!g" Doxyfile.in
+    - doxygen Doxyfile.in
+    - mv html/* ${CI_PROJECT_DIR}/public
+    artifacts:
+        name: "${CI_PROJECT_NAME}-${CI_JOB_STAGE}-${CI_JOB_NAME}_${CI_COMMIT_SHORT_SHA}"
+        expire_in: 10 mins 
+        paths:
+        - public
+    rules:
+      - if: $CI_COMMIT_BRANCH == "main" 
+      - if: $CI_COMMIT_BRANCH == "master" 
+      - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'

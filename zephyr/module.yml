@@ -1,0 +1,7 @@
+# Copyright 2023, Victor Chavez
+# SPDX-License-Identifier: Apache-2.0
+
+name: ble_utils
+build:
+  cmake: .
+  kconfig: zephyr/KConfig
