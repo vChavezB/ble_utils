@@ -1,5 +1,7 @@
-*** Copyright (c) 2024, Victor Chavez ***
-*** SPDX-License-Identifier: Apache-2.0 *** 
+*** Comments ***
+Copyright (c) 2024, Victor Chavez
+SPDX-License-Identifier: Apache-2.0
+
 *** Variables ***
 ${UART}                       sysbus.uart0
 
@@ -51,6 +53,7 @@ Uptime Demo
     Wait For Line On Uart     Booting Zephyr                                testerId=${per_uart}
     Wait For Line On Uart     Scanning successfully started                 testerId=${cen_uart}
     Wait For Line On Uart     Bluetooth initialized		                    testerId=${per_uart}
+    Wait For Line On Uart     Matched Uptime adv. UUID                      testerId=${cen_uart}
     Wait For Line On Uart     Connected                		                testerId=${per_uart}
     Wait For Line On Uart     Connected                		                testerId=${cen_uart}
     Wait For Line On Uart     Service found                                 testerId=${cen_uart}

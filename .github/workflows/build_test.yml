@@ -15,6 +15,7 @@ jobs:
     env:
       CMAKE_PREFIX_PATH: /opt/toolchains
       ZEPHYR_VERSION: 3.6.0
+      # Board to use with renode
       BOARD: nrf52840dk_nrf52840
     steps:
       - name: Checkout
@@ -25,15 +26,23 @@ jobs:
           west init --mr v$ZEPHYR_VERSION
           west update -o=--depth=1 -n
 
+      # Sample as DUT for testing with Renode
       - name: Build Uptime Sample
         working-directory: /tmp/
         run: |
           west build $GITHUB_WORKSPACE/samples/uptime -b $BOARD --build-dir $GITHUB_WORKSPACE/samples/uptime/build
 
+      # BLE Central for testing with Renode
       - name: Build Central
         working-directory: /tmp/
         run: |
           west build $GITHUB_WORKSPACE/tests/renode/ble_central -b $BOARD --build-dir $GITHUB_WORKSPACE/tests/renode/ble_central/build
+
+      # Posix build for debugging with bluetooth virtual controller
+      - name: Build Posix
+        working-directory: /tmp/
+        run: |
+          west build $GITHUB_WORKSPACE/samples/uptime -b native_posix_64 --build-dir $GITHUB_WORKSPACE/samples/uptime/build_posix -- -DOVERLAY_CONFIG=$GITHUB_WORKSPACE/samples/uptime/boards/native_posix_64.conf
 
       - name : Upload Firmware
         uses: actions/upload-artifact@v4
@@ -41,6 +50,7 @@ jobs:
           name: zephyr-build
           path: |
             samples/uptime/build/zephyr/zephyr.elf
+            samples/uptime/build_posix/zephyr/zephyr.exe
             tests/renode/ble_central/build/zephyr/zephyr.elf
 
   test:

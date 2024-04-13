@@ -67,7 +67,7 @@ static constexpr bt_uuid_128 uuid128_init(uint32_t w32,uint16_t w1,uint16_t w2,u
 	const uint8_t b15 =  static_cast<uint8_t>(w32 >> 24 & 0xFF);
 	bt_uuid_128 uuid
 	{
-		.uuid = BT_UUID_TYPE_128,
+		.uuid = {.type = BT_UUID_TYPE_128},
 		.val = 	{b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15}
 	};
 	return uuid;

@@ -52,6 +52,14 @@ Characteristic::Characteristic(const bt_uuid * uuid, uint8_t props, uint8_t perm
         m_ccc_enable(ccc_enable)
 {
 }
+
+
+   
+const bt_uuid * Characteristic::get_uuid()
+{
+    return m_attr_value.uuid;
+}
+
 ssize_t Characteristic::_read_cb(struct bt_conn *conn,
                     const struct bt_gatt_attr *attr,
                     void *buf, uint16_t len,
@@ -113,10 +121,16 @@ void Service::register_char(const Characteristic * chrc)
         attrs[m_gatt_service.attr_count++] = char_ccc->m_ccc_attr;
     }
 }
+
 int Service::init()
 {
     const int res = bt_gatt_service_register(&m_gatt_service);
     return res;
+}
+
+const bt_uuid * Service::get_uuid()
+{
+    return static_cast<const bt_uuid *>(m_gatt_service.attrs[0].user_data);
 }
 
 /**
@@ -149,8 +163,8 @@ ICharacteristicCCC::ICharacteristicCCC(const bt_uuid * uuid, uint8_t props, uint
                     }
         )
 {
-
 }
+
 ICharacteristicCCC::~ICharacteristicCCC() {}
 
 void ICharacteristicCCC::_ccc_changed(const bt_gatt_attr *attr, uint16_t value)

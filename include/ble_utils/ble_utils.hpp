@@ -1,8 +1,8 @@
 /*!*****************************************************************
-* Copyright 2023, Victor Chavez
+* Copyright 2023-2024 Victor Chavez
 * SPDX-License-Identifier: Apache-2.0
 * @file ble_utils.hpp
-* @author Victor Chavez (chavez-bermudez@fh-aachen.de)
+* @author Victor Chavez (vchavezb@protonmail.com)
 *
 * @brief
 * BLE C++ Utilities for development of BLE GATT applications with the Zephyr OS 
@@ -84,6 +84,13 @@ public:
         ARG_UNUSED(len);
         return 0;
     }
+
+    /**
+     * @brief Get the UUID of the characteristic
+     * 
+     * @return const bt_uuid* Pointer to the UUID of the characteristic
+     */
+    const bt_uuid * get_uuid();
 
 private:
     friend ICharacteristicCCC;
@@ -286,6 +293,14 @@ public:
      * @return Zephyr return value from bt_gatt_service_register 
      */
     int init();
+
+
+    /**
+     * @brief Get the UUID of the service
+     * 
+     * @return const bt_uuid* Pointer to the UUID of the service
+    */
+    const bt_uuid * get_uuid();
 
 private:
     static constexpr uint8_t MAX_ATTR = CONFIG_BLE_UTILS_MAX_ATTR;
