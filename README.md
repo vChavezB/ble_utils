@@ -26,7 +26,13 @@ The  definition of BLE services and characteristics can be done at compile time 
 A demo is located in the samples folder. This demo can be used as a reference on how to use this module.
 
 
+# Tests
+
+Some basic tests are done with [Renode] to simulate the correct setup of the BLE Services and characteristics. Please
+refer to the github actions (`.github/workflows/build_test.yml`) to run the tests locally.
+
+
 ## Contact
 
-Contact for issues, contributions as git patches or general information at chavez-bermudez@fh-aachen.de
+Contact for issues, contributions as git patches or general information at vchavezb(at)protonmail.com
 
