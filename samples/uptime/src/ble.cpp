@@ -89,17 +89,21 @@ bool register_svc_to_scan_rsp(const bt_uuid *uuid)
 {
 	uint8_t data_len;
 	const uint8_t * p_data;
+	uint8_t adv_type;
 	switch(uuid->type){
 		case BT_UUID_TYPE_16:
 			data_len = 2;
+			adv_type = BT_DATA_UUID16_SOME;
 			p_data = (const uint8_t *)&((bt_uuid_16 *)uuid)->val;
 			break;
 		case BT_UUID_TYPE_32:
 			data_len = 4;
+			adv_type = BT_DATA_UUID32_SOME;
 			p_data = (const uint8_t *)&((bt_uuid_32 *)uuid)->val;
 			break;
 		case BT_UUID_TYPE_128:
 			data_len = 16;
+			adv_type = BT_DATA_UUID128_SOME;
 			p_data = (const uint8_t *)&((bt_uuid_128 *)uuid)->val[0];
 			break;
 		default:
@@ -108,7 +112,7 @@ bool register_svc_to_scan_rsp(const bt_uuid *uuid)
 
 	if (sd_cnt < MAX_SD_SIZE) {
 		bt_data data = {.
-			type = uuid->type,
+			type = adv_type,
 			.data_len = data_len,
 			.data = p_data
 		};

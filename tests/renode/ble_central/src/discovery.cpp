@@ -193,9 +193,9 @@ static void device_found_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	//LOG_INF("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i",
 	//       dev, type, ad->len, rssi);
 
-	/* We're only interested in connectable events */
 	if (type == BT_GAP_ADV_TYPE_ADV_IND ||
-	    type == BT_GAP_ADV_TYPE_ADV_DIRECT_IND) {
+	    type == BT_GAP_ADV_TYPE_ADV_DIRECT_IND ||
+		type == BT_GAP_ADV_TYPE_SCAN_RSP) {
 		bt_data_parse(ad, adv_data_cb, (void *)addr);
 	}
 }
