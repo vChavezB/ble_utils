@@ -45,7 +45,7 @@ renode-test -t tests/renode/uptime_test.robot
 
 ## Debug 
 
-If you want to manually debug the tests instead load the  Renode script script
+If you want to manually debug the tests instead load the Renode script
 
 ```bash
 renode tests/renode/uptime.resc
