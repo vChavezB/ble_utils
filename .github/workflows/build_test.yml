@@ -35,12 +35,19 @@ jobs:
         run: |
           west build $GITHUB_WORKSPACE/tests/renode/ble_central -b $BOARD --build-dir $GITHUB_WORKSPACE/tests/renode/ble_central/build
 
+
+      - name: Build Posix
+        working-directory: /tmp/
+        run: |
+          west build $GITHUB_WORKSPACE/samples/uptime -b $BOARD --build-dir $GITHUB_WORKSPACE/samples/uptime/build_posix
+
       - name : Upload Firmware
         uses: actions/upload-artifact@v4
         with:
           name: zephyr-build
           path: |
             samples/uptime/build/zephyr/zephyr.elf
+            samples/uptime/build_posix/zephyr/zephyr.exe
             tests/renode/ble_central/build/zephyr/zephyr.elf
 
   test:
