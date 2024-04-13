@@ -2,6 +2,7 @@ build*
 *.pyc
 *.idea
 */.vscode/*
+.vscode/*
 tests/renode/logs/*
 tests/renode/*.html
 tests/renode/*.xml
