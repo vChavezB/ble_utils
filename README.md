@@ -28,7 +28,7 @@ A demo is located in the samples folder. This demo can be used as a reference on
 
 # Tests
 
-Some basic tests are done with [Renode] to simulate the correct setup of the BLE Services and characteristics. Please
+Some basic tests are done with [Renode](https://renode.readthedocs.io/en/latest/) to simulate the correct setup of the BLE Services and characteristics. Please
 refer to the github actions (`.github/workflows/build_test.yml`) to run the tests locally.
 
 
