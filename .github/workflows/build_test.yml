@@ -35,11 +35,10 @@ jobs:
         run: |
           west build $GITHUB_WORKSPACE/tests/renode/ble_central -b $BOARD --build-dir $GITHUB_WORKSPACE/tests/renode/ble_central/build
 
-
       - name: Build Posix
         working-directory: /tmp/
         run: |
-          west build $GITHUB_WORKSPACE/samples/uptime -b $BOARD --build-dir $GITHUB_WORKSPACE/samples/uptime/build_posix
+          west build $GITHUB_WORKSPACE/samples/uptime -b native_posix_64 --build-dir $GITHUB_WORKSPACE/samples/uptime/build_posix
 
       - name : Upload Firmware
         uses: actions/upload-artifact@v4
