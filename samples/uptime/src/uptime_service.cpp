@@ -1,9 +1,8 @@
 /*!*****************************************************************
-* Copyright 2023, Victor Chavez
+* Copyright 2023-2024, Victor Chavez
 * SPDX-License-Identifier: Apache-2.0
-* @file uptime_service.cpp
-* @author Victor Chavez (chavez-bermudez@fh-aachen.de)
-* @date 13.03.2023
+* @file main.cpp
+* @author Victor Chavez (vchavezb@protonmail.com)
 *
 * @brief
 * BLE Service implementation
@@ -12,24 +11,15 @@
 * - language: C++17
 * - OS: Zephyr v3.2.x
 ********************************************************************/
-
+#include <zephyr/logging/log.h>
 #include "uptime_service.hpp"
+
+LOG_MODULE_REGISTER(uptime_svc, CONFIG_LOG_DEFAULT_LEVEL);
 
 namespace uptime
 {
 
-namespace uuid
-{
-    static constexpr bt_uuid_128 svc_base = ble_utils::uuid::uuid128_init(0xABCD0000, 
-                                                                        0x1234,
-                                                                        0x5678,
-                                                                        0x9ABC,
-                                                                        0xDEF012345678);
 
-    static constexpr bt_uuid_128 char_basic = ble_utils::uuid::derive_uuid(svc_base,0x0001);
-    static constexpr bt_uuid_128 char_notify = ble_utils::uuid::derive_uuid(svc_base,0x0002);
-    static constexpr bt_uuid_128 char_indicate = ble_utils::uuid::derive_uuid(svc_base,0x0003);
-}
 
 namespace characteristic
 {
@@ -61,9 +51,25 @@ Notify::Notify():
 {
 }
 
+void Notify::ccc_changed(CCCValue_e value)
+{
+    int val = static_cast<int>(value);
+    LOG_INF("Characteristic Notify Uptime CCC changed %d\n",val);
+}
+
 Indicate::Indicate():
     ble_utils::gatt::CharacteristicIndicate((const bt_uuid*)&uuid::char_indicate)    
 {
+}
+
+void Indicate::ccc_changed(CCCValue_e value)
+{
+    int val = static_cast<int>(value);
+    LOG_INF("Characteristic Indicate Uptime CCC changed %d\n",val);
+}
+void Indicate::indicate_rsp()
+{
+    LOG_INF("Characteristic Indicate Uptime Completed\n");
 }
 
 } // namespace characteristic
@@ -72,8 +78,8 @@ Service::Service():
     ble_utils::gatt::Service((const bt_uuid*)&uuid::svc_base)
 {
     register_char(&m_basic);
-    register_char(&m_notify);
     register_char(&m_indicate);
+    register_char(&m_notify);
 }
 
 void Service::update(uint32_t uptime)

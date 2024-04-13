@@ -1,8 +1,8 @@
 /*!*****************************************************************
 * Copyright 2023, Victor Chavez
 * SPDX-License-Identifier: Apache-2.0
-* @file ble.hpp
-* @author Victor Chavez (chavez-bermudez@fh-aachen.de)
+* @file main.cpp
+* @author Victor Chavez (vchavezb@protonmail.com)
 *
 * @brief
 * BLE connection functions for uptime service demo

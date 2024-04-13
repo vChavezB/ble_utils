@@ -1,1 +1,8 @@
 build*
+*.pyc
+*.idea
+*/.vscode/*
+tests/renode/logs/*
+tests/renode/*.html
+tests/renode/*.xml
+tests/renode/snapshots

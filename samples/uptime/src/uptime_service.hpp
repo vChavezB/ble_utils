@@ -1,8 +1,8 @@
 /*!*****************************************************************
-* Copyright 2023, Victor Chavez
+* Copyright 2023-2024, Victor Chavez
 * SPDX-License-Identifier: Apache-2.0
-* @file uptime_service.hpp
-* @author Victor Chavez (chavez-bermudez@fh-aachen.de)
+* @file main.cpp
+* @author Victor Chavez (vchavezb@protonmail.com)
 *
 * @brief
 * Uptime BLE Service that uses the BLE Utils module
@@ -16,8 +16,22 @@
 #include <ble_utils/ble_utils.hpp>
 #include <ble_utils/uuid.hpp>
 
+
 namespace uptime
 {
+
+namespace uuid
+{
+    static constexpr bt_uuid_128 svc_base = ble_utils::uuid::uuid128_init(0xABCD0000,
+                                                                        0x1234,
+                                                                        0x5678,
+                                                                        0x9ABC,
+                                                                        0xDEF012345678);
+
+    static constexpr bt_uuid_128 char_basic = ble_utils::uuid::derive_uuid(svc_base,0x0001);
+    static constexpr bt_uuid_128 char_notify = ble_utils::uuid::derive_uuid(svc_base,0x0002);
+    static constexpr bt_uuid_128 char_indicate = ble_utils::uuid::derive_uuid(svc_base,0x0003);
+}
 
 namespace characteristic
 {
@@ -37,11 +51,7 @@ class Notify final: public ble_utils::gatt::CharacteristicNotify
 public:
     Notify();
 private:
-    void ccc_changed(CCCValue_e value) override
-    {
-        int val = static_cast<int>(value);
-        printk("Characteristic Notify Uptime CCC changed %d\n",val);
-    }
+    void ccc_changed(CCCValue_e value) override;
 };
 
 class Indicate final: public ble_utils::gatt::CharacteristicIndicate
@@ -49,16 +59,8 @@ class Indicate final: public ble_utils::gatt::CharacteristicIndicate
 public:
     Indicate();
 private:
-    void ccc_changed(CCCValue_e value) override
-    {
-        int val = static_cast<int>(value);
-        printk("Characteristic Indicate Uptime CCC changed %d\n",val);
-    }
-    void indicate_rsp() override
-    {
-        printk("Characteristic Indicate Uptime Completed\n");
-    }
-
+    void ccc_changed(CCCValue_e value) override;
+    void indicate_rsp();
 };
 
 }
