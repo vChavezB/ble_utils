@@ -70,7 +70,6 @@ jobs:
         with:
             renode-version: '1.13.3'
             tests-to-run: 'tests/renode/uptime_test.robot'
-            renode-path: renode-1.13
             artifacts-path: ${{ github.workspace }}
 
 
