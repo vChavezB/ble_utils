@@ -28,8 +28,28 @@ A demo is located in the samples folder. This demo can be used as a reference on
 
 # Tests
 
-Some basic tests are done with [Renode](https://renode.readthedocs.io/en/latest/) to simulate the correct setup of the BLE Services and characteristics. Please
-refer to the github actions (`.github/workflows/build_test.yml`) to run the tests locally.
+Some basic tests are done with [Renode](https://renode.readthedocs.io/en/latest/) to simulate the correct setup of the BLE Services and characteristics. 
+
+## Requirements
+
+- Renode v1.13.3
+- Robot framework
+
+## Robot
+
+To run the unit test suite with robot execute:
+
+```bash
+renode-test -t tests/renode/uptime_test.robot
+```
+
+## Debug 
+
+If you want to manually debug the tests instead load the  Renode script script
+
+```bash
+renode tests/renode/uptime.resc
+```
 
 
 ## Contact
