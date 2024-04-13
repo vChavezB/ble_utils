@@ -148,26 +148,6 @@ static bool adv_data_cb(bt_data *data, void *user_data)
 {
 	auto addr = static_cast<bt_addr_le_t*>(user_data);
 	LOG_INF("Adv data type %u len %u", data->type, data->data_len);
-	int err = bt_le_scan_stop();
-	if (err) {
-		LOG_INF("Stop LE scan failed (err %d)", err);
-		return false;
-	}
-
-	LOG_INF("Connecting..");
-	err = bt_conn_le_create(addr, &conn_create_param,
-				&conn_default_param, &default_conn);
-	if (err) {
-		LOG_ERR("Create conn failed (err %d)", err);
-		start_scan();
-	}
-	return true;
-
-	/*
-	TODO wait for upcoming changes with uuid advertisement
-	until then do not compare uuid in adv data
-	*/
-	/*
 	switch (data->type) {
 	case BT_DATA_UUID128_SOME:
 	case BT_DATA_UUID128_ALL:
@@ -185,13 +165,23 @@ static bool adv_data_cb(bt_data *data, void *user_data)
 				continue;
 			}
 			LOG_INF("Matched Uptime adv. UUID");
-			
+			err = bt_le_scan_stop();
+			if (err) {
+				LOG_INF("Stop LE scan failed (err %d)", err);
+				return false;
+			}
+
+			LOG_INF("Connecting..");
+			err = bt_conn_le_create(addr, &conn_create_param,
+						&conn_default_param, &default_conn);
+			if (err) {
+				LOG_ERR("Create conn failed (err %d)", err);
+				start_scan();
+			}
 			return false;
 		}
 	}
-
 	return true;
-	*/
 }
 
 static void device_found_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,

@@ -11,6 +11,8 @@
 * - language: C++17
 * - OS: Zephyr v3.2.x
 ********************************************************************/
+#include <zephyr/bluetooth/uuid.h>
+
 namespace ble
 {
 /**
@@ -19,4 +21,15 @@ namespace ble
  * @return zephyr bluetooth error value
  */
 int init();
+
+/**
+ * @brief Registers a service to the scan response message
+ * when advertising.
+ *
+ * @param uuid The 128 bit uuid of the service.
+ * @return true on success.
+ * @return false when the maximum number of configurable services is reached.
+ */
+bool register_svc_to_scan_rsp(const bt_uuid *uuid);
+
 } // namespace ble

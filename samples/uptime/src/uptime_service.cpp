@@ -19,8 +19,6 @@ LOG_MODULE_REGISTER(uptime_svc, CONFIG_LOG_DEFAULT_LEVEL);
 namespace uptime
 {
 
-
-
 namespace characteristic
 {
 

@@ -24,9 +24,9 @@ int main(void)
 {
 	LOG_INF("Starting Uptime BLE Utils sample");
 	uptime_service.init();
+	ble::register_svc_to_scan_rsp(uptime_service.get_uuid());
 	ble::init();
-	for (;;)
-	{
+	for (;;) {
 		const uint32_t uptime_ms = k_uptime_get_32();
 		uptime_service.update(uptime_ms/1000U);
 		k_sleep(K_MSEC(1000));		
