@@ -1,0 +1,8 @@
+python controllers.py tcp-server:_:9000 tcp-server:_:9001
+
+./zephyr.exe --bt-dev=127.0.0.1:9001
+
+python scan.py
+
+controller.py of this dir must replace file from site-packages\bumble\controller.py, this is due to some LE commands
+not implemented in bumble
