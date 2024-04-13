@@ -1,0 +1,78 @@
+# Copyright (c) 2024, Victor Chavez (vchavezb@protonmail.com)
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+
+  build:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/zephyrproject-rtos/ci:v0.26.2
+    env:
+      CMAKE_PREFIX_PATH: /opt/toolchains
+      ZEPHYR_VERSION: 3.6.0
+      BOARD: nrf52840dk_nrf52840
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Initialize
+        run: |
+          cd /tmp/
+          west init --mr v$ZEPHYR_VERSION
+          west update -o=--depth=1 -n
+
+      - name: Build Uptime Sample
+        working-directory: /tmp/
+        run: |
+          west build $GITHUB_WORKSPACE/samples/uptime -b $BOARD --build-dir $GITHUB_WORKSPACE/samples/uptime/build
+
+      - name: Build Central
+        working-directory: /tmp/
+        run: |
+          west build $GITHUB_WORKSPACE/tests/renode/uptime_central -b $BOARD --build-dir $GITHUB_WORKSPACE/tests/renode/uptime_central/build
+
+      - name : Upload Firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-build
+          path: |
+            samples/uptime/build/zephyr/zephyr.elf
+            test/renode/uptime_central/build/zephyr/zephyr.elf
+
+  test:
+    needs: build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        
+      - name: Download zephyr binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-build
+                  
+      - name: Run tests on latest Renode
+        uses: antmicro/renode-test-action@v3.0.0
+        with:
+            renode-version: '1.13.3'
+            tests-to-run: 'tests/renode/uptime_test.robot'
+            renode-path: renode-1.13
+            artifacts-path: ${{ github.workspace }}
+
+
+      - name: Archive latest results
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+            name: test-results-latest
+            path: |
+                report.html
+                log.html
+                robot_output.xml
+
+
+
