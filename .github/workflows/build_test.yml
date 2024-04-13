@@ -33,7 +33,7 @@ jobs:
       - name: Build Central
         working-directory: /tmp/
         run: |
-          west build $GITHUB_WORKSPACE/tests/renode/uptime_central -b $BOARD --build-dir $GITHUB_WORKSPACE/tests/renode/uptime_central/build
+          west build $GITHUB_WORKSPACE/tests/renode/ble_central -b $BOARD --build-dir $GITHUB_WORKSPACE/tests/renode/ble_central/build
 
       - name : Upload Firmware
         uses: actions/upload-artifact@v4
@@ -41,7 +41,7 @@ jobs:
           name: zephyr-build
           path: |
             samples/uptime/build/zephyr/zephyr.elf
-            test/renode/uptime_central/build/zephyr/zephyr.elf
+            tests/renode/ble_central/build/zephyr/zephyr.elf
 
   test:
     needs: build
