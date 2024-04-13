@@ -26,7 +26,33 @@ The  definition of BLE services and characteristics can be done at compile time 
 A demo is located in the samples folder. This demo can be used as a reference on how to use this module.
 
 
+# Tests
+
+Some basic tests are done with [Renode](https://renode.readthedocs.io/en/latest/) to simulate the correct setup of the BLE Services and characteristics. 
+
+## Requirements
+
+- Renode v1.13.3
+- Robot framework
+
+## Robot
+
+To run the unit test suite with robot execute:
+
+```bash
+renode-test -t tests/renode/uptime_test.robot
+```
+
+## Debug 
+
+If you want to manually debug the tests instead load the Renode script
+
+```bash
+renode tests/renode/uptime.resc
+```
+
+
 ## Contact
 
-Contact for issues, contributions as git patches or general information at chavez-bermudez@fh-aachen.de
+Contact for issues, contributions as git patches or general information at vchavezb(at)protonmail.com
 

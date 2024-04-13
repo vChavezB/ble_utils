@@ -1,0 +1,25 @@
+using sysbus
+
+emulation CreateBLEMedium "wireless"
+
+
+mach add "central"
+machine LoadPlatformDescription @platforms/cpus/nrf52840.repl
+connector Connect sysbus.radio wireless
+showAnalyzer uart0 
+
+mach create "peripheral"
+machine LoadPlatformDescription @platforms/cpus/nrf52840.repl
+connector Connect sysbus.radio wireless
+showAnalyzer uart0 
+
+emulation SetGlobalQuantum "0.00001"
+
+
+mach set "central"
+sysbus LoadELF $ORIGIN/ble_central/build/zephyr/zephyr.elf
+
+mach set "peripheral"
+sysbus LoadELF $ORIGIN/../../samples/uptime/build/zephyr/zephyr.elf
+
+start

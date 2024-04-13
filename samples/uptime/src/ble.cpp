@@ -1,8 +1,8 @@
 /*!*****************************************************************
-* Copyright 2023, Victor Chavez
+* Copyright 2023-2024, Victor Chavez
 * SPDX-License-Identifier: Apache-2.0
-* @file ble.cpp
-* @author Victor Chavez (chavez-bermudez@fh-aachen.de)
+* @file main.cpp
+* @author Victor Chavez (vchavezb@protonmail.com)
 *
 * @brief
 * BLE connection implementation for uptime service demo
@@ -12,7 +12,9 @@
 * - OS: Zephyr v3.2.x
 ********************************************************************/
 #include <zephyr/bluetooth/conn.h>
+#include <zephyr/logging/log.h>
 #include "ble.hpp"
+LOG_MODULE_REGISTER(ble, CONFIG_LOG_DEFAULT_LEVEL);
 
 namespace ble
 {
@@ -27,24 +29,24 @@ static void connected(bt_conn *conn, uint8_t conn_err)
 
 	if (conn_err)
     {
-		printk("Connection failed (err %d)\n", conn_err);
+		LOG_INF("Connection failed (err %d)", conn_err);
 		return;
 	}
 
 	err = bt_conn_get_info(conn, &info);
 	if (err)
     {
-		printk("Failed to get connection info (err %d)\n", err);
+		LOG_ERR("Failed to get connection info (err %d)", err);
 	}
     else 
     {
-		printk("Connected: %s\n", addr);
+		LOG_INF("Connected: %s\n", addr);
 	}
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
-	printk("Disconnected (reason 0x%02x)\n", reason);
+	LOG_INF("Disconnected (reason 0x%02x)", reason);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) =
@@ -71,7 +73,7 @@ static int start_adv(void)
                                 nullptr,
                                 0);
 	if (err) {
-		printk("Failed to create advertiser set (err %d)\n", err);
+		LOG_ERR("Failed to create advertiser set (err %d)", err);
 		return err;
 	}
 	return 0;
@@ -85,15 +87,15 @@ int init()
 		err = bt_enable(NULL);
 		if (err)
 		{
-			printk("Bluetooth init failed (err %d)\n", err);
+			LOG_ERR("Bluetooth init failed (err %d)", err);
 			break;
 		}
 
-		printk("Bluetooth initialized\n");
+		LOG_INF("Bluetooth initialized\n");
 		err = start_adv();
 		if (err)
 		{
-			printk("Advertising failed to create (err %d)\n", err);
+			LOG_ERR("Advertising failed to create (err %d)", err);
 			break;
 		}
 	}while(0);
