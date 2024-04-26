@@ -62,10 +62,11 @@ public:
      * @return Number of bytes read, or in case of an error
      *          BT_GATT_ERR() with a specific BT_ATT_ERR_* error code.
      */
-    virtual ssize_t read_cb(void *buf, uint16_t len)
+    virtual ssize_t read_cb(void *buf, uint16_t len, uint16_t offset)
     {
         ARG_UNUSED(buf);
         ARG_UNUSED(len);
+        ARG_UNUSED(offset);
         return 0;
     };
 
@@ -78,10 +79,12 @@ public:
     *  @return Number of bytes written, or in case of an error
     *          BT_GATT_ERR() with a specific BT_ATT_ERR_* error code.
     */
-    virtual ssize_t write_cb(const void *buf,uint16_t len)
+    virtual ssize_t write_cb(const void *buf,uint16_t len, uint16_t offset, uint8_t flags)
     {
         ARG_UNUSED(buf);
         ARG_UNUSED(len);
+        ARG_UNUSED(offset);
+        ARG_UNUSED(flags);
         return 0;
     }
 

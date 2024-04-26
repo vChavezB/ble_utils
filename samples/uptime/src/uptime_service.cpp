@@ -29,8 +29,9 @@ Basic::Basic():
 {
 }
 
-ssize_t Basic::read_cb(void *buf, uint16_t len)
+ssize_t Basic::read_cb(void *buf, uint16_t len, uint16_t offset)
 {
+    ARG_UNUSED(offset);
     uint8_t * pUptime = static_cast<uint8_t*>(buf);
     pUptime[0] = m_uptime & 0xFF;
     pUptime[1] = m_uptime>>8 & 0xFF;
