@@ -59,6 +59,7 @@ public:
      * 
      * @param buf Buffer to place the read result in
      * @param len  Length of data to read
+     * @param offset Offset to start reading from
      * @return Number of bytes read, or in case of an error
      *          BT_GATT_ERR() with a specific BT_ATT_ERR_* error code.
      */
@@ -71,11 +72,13 @@ public:
     };
 
     /**
-    * @brief Callback function that requests to write data 
+    *  @brief Callback function that requests to write data 
     *        to the characteristic.
     * 
-    * @param buf  Buffer with the data to write
-    * @param len Number of bytes in the buffer
+    *  @param buf  Buffer with the data to write
+    *  @param len Number of bytes in the buffer
+    *  @param offset Offset to start writing from
+    *  @param flags  Flags (``BT_GATT_WRITE_FLAG_*``)
     *  @return Number of bytes written, or in case of an error
     *          BT_GATT_ERR() with a specific BT_ATT_ERR_* error code.
     */
