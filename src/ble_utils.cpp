@@ -66,9 +66,8 @@ ssize_t Characteristic::_read_cb(struct bt_conn *conn,
                     uint16_t offset)
 {
     ARG_UNUSED(conn);
-    ARG_UNUSED(offset);
     auto instance = static_cast<Characteristic *>(attr->user_data);
-    return instance->read_cb(buf, len);
+    return instance->read_cb(buf, len, offset);
 }
 ssize_t Characteristic::_write_cb(struct bt_conn *conn,
                             const struct bt_gatt_attr *attr,
@@ -78,10 +77,8 @@ ssize_t Characteristic::_write_cb(struct bt_conn *conn,
                             uint8_t flags)
 {
     ARG_UNUSED(conn);
-    ARG_UNUSED(offset);
-    ARG_UNUSED(flags);
     auto instance = static_cast<Characteristic *>(attr->user_data);
-    return instance->write_cb(buf, len);
+    return instance->write_cb(buf, len, offset, flags);
 }
 
 Service::Service(const bt_uuid *uuid):
@@ -112,6 +109,7 @@ void Service::register_char(const Characteristic * chrc)
                                     ICharacteristicCCC::attr_size
                                     : Characteristic::attr_size;
     const auto req_size{m_gatt_service.attr_count + chrc_attr_size};
+    ARG_UNUSED(req_size);
     __ASSERT(req_size <= MAX_ATTR, "Max. attribute size reached");
     attrs[m_gatt_service.attr_count++] = chrc->m_attr;
     attrs[m_gatt_service.attr_count++] = chrc->m_attr_value;

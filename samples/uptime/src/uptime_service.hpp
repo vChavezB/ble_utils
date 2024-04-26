@@ -42,7 +42,7 @@ public:
     Basic();
     void update(uint32_t uptime);
 private:
-    ssize_t read_cb(void *buf, uint16_t len) override;
+    ssize_t read_cb(void *buf, uint16_t len, uint16_t offset) override;
     uint32_t m_uptime{0};
 };
 
