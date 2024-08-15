@@ -10,4 +10,4 @@ target_include_directories(app PUBLIC include)
 zephyr_include_directories(include)
 
 target_compile_options(${lib_name} PRIVATE -Wall -Wextra -Wfatal-errors)
-endif() # CONFIG_PHYPHOX_BLE
+endif() # CONFIG_BLE_UTILS
