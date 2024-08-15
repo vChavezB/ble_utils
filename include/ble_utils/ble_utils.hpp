@@ -118,9 +118,9 @@ private:
     Characteristic(const bt_uuid * uuid,uint8_t props,uint8_t perm,bool ccc_enable);
 
     static ssize_t _read_cb(struct bt_conn *conn,
-					    const struct bt_gatt_attr *attr,
-					    void *buf, uint16_t len,
-					    uint16_t offset);
+                        const struct bt_gatt_attr *attr,
+                        void *buf, uint16_t len,
+                        uint16_t offset);
 
     static ssize_t _write_cb(struct bt_conn *conn,
                                 const struct bt_gatt_attr *attr,
@@ -282,7 +282,7 @@ public:
      * 
      * @param service_uuid UUID assigned to the service
      */
-	Service(const bt_uuid *service_uuid);
+    Service(const bt_uuid *service_uuid);
     
     /**
      * @brief Register a characteristic to the service
@@ -290,7 +290,7 @@ public:
      * 
      * @param chrc Pointer to characteristic object
      */
-	void register_char(const Characteristic * chrc);
+    void register_char(const Characteristic * chrc);
 
     /**
      * @brief Initialize the BLE Service
@@ -299,7 +299,6 @@ public:
      * @return Zephyr return value from bt_gatt_service_register 
      */
     int init();
-
 
     /**
      * @brief Get the UUID of the service
@@ -312,7 +311,7 @@ private:
     static constexpr uint8_t MAX_ATTR = CONFIG_BLE_UTILS_MAX_ATTR;
 
     /*! @brief Total attributes (i.e. bt_gatt_attr) 
-    *   required to represent a BLE Service. 
+     *         required to represent a BLE Service. 
      * @details This value is obtained from the zephyr macro BT_GATT_SERVICE_DEFINE.
      */
     static constexpr uint8_t SVC_ATTR_SIZE = 1;

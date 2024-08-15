@@ -1,8 +1,8 @@
 /*!*****************************************************************
-* Copyright 2023, Victor Chavez
+* Copyright 2023-2024 Victor Chavez
 * SPDX-License-Identifier: Apache-2.0
 * @file ble_utils.cpp
-* @author Victor Chavez (chavez-bermudez@fh-aachen.de)
+* @author Victor Chavez (vchavezb@protonmail.com)
 ********************************************************************/
 
 #include <ble_utils/ble_utils.hpp>
@@ -91,8 +91,7 @@ Service::Service(const bt_uuid *uuid):
         }
     )
 {
-    const bt_gatt_attr svc_attr =
-    {
+    const bt_gatt_attr svc_attr = {
         .uuid = static_cast<const bt_uuid *>(static_cast<const void *>(&uuid::PRIMARY_SVC)),
         .read = bt_gatt_attr_read_service,
         .write = nullptr,
@@ -113,8 +112,7 @@ void Service::register_char(const Characteristic * chrc)
     __ASSERT(req_size <= MAX_ATTR, "Max. attribute size reached");
     attrs[m_gatt_service.attr_count++] = chrc->m_attr;
     attrs[m_gatt_service.attr_count++] = chrc->m_attr_value;
-    if(chrc->m_ccc_enable)
-    {
+    if (chrc->m_ccc_enable) {
         auto char_ccc = static_cast<const ICharacteristicCCC*>(chrc);
         attrs[m_gatt_service.attr_count++] = char_ccc->m_ccc_attr;
     }
@@ -169,12 +167,9 @@ void ICharacteristicCCC::_ccc_changed(const bt_gatt_attr *attr, uint16_t value)
 {
     auto ccc_data = static_cast<const gatt_ccc*>(attr->user_data);
     auto instance = static_cast<ICharacteristicCCC*>(ccc_data->ctx);
-    if(value > BT_GATT_CCC_INDICATE)
-    {
+    if (value > BT_GATT_CCC_INDICATE) {
         instance->ccc_changed(CCCValue_e::NA);  
-    }
-    else
-    {
+    } else {
         const CCCValue_e ccc_value = static_cast<CCCValue_e>(value);
         instance->ccc_changed(ccc_value);
     }
@@ -223,8 +218,7 @@ int CharacteristicIndicate::indicate(const void * data, const uint16_t len)
 {
     indicate_params.data = data;
     indicate_params.len = len;
-    const int gatt_res =  bt_gatt_indicate(nullptr,
-		                                    &indicate_params);
+    const int gatt_res =  bt_gatt_indicate(nullptr, &indicate_params);
     return gatt_res;
 }
 
