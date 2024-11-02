@@ -68,7 +68,7 @@ jobs:
       - name: Run tests on latest Renode
         uses: antmicro/renode-test-action@v3.0.0
         with:
-            renode-version: '1.13.3'
+            renode-version: '1.15.3'
             tests-to-run: 'tests/renode/uptime_test.robot'
             artifacts-path: ${{ github.workspace }}
 
